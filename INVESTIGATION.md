@@ -64,21 +64,47 @@ account config was restored from `config.toml.before-cua-repl-20260926-175448`.
 The app-created `.tmp/bundled-marketplaces` inside the account home was left in
 place; it is harmless.
 
-## Proposed fix (pending Alejandro's decisions)
+## Chosen setup: one account on the standard home
 
-1. `launchctl unsetenv CODEX_HOME` so ChatGPT.app uses `~/.codex` again, then
-   launch the app once so it refreshes `~/.codex` plugins to 26.924 with the
-   correct CLI path.
-2. Apply the upstream issue's verified workaround: define `[mcp_servers.cua_repl]`
-   in `~/.codex/config.toml`, generated from the app-maintained
-   `unified-computer-use/<version>/.mcp.json`. Orca mirrors it into every account
-   home, including after account switches. A dotfiles script regenerates it after
-   ChatGPT updates. Remove it once Orca fixes #20741.
-3. Validate in a fresh Orca Codex session: tool discovery, one read-only
-   `cua.getState()`, then one harmless Chrome action, plus Orca's embedded browser.
+Alejandro chose the native setup: a single ChatGPT login, with the ChatGPT app and
+Orca's Codex CLI both using `~/.codex`. The CLI departs from the app only through
+the `cli` profile (`dotfiles/codex/cli.config.toml`, linked at
+`~/.codex/cli.config.toml`), which selects CLI-only skills, plugins, and connectors.
+This removes the need for any `cua_repl` copy or Orca account-home workaround.
 
-A `codex mcp get cua_repl` dry run with this definition supplied via `-c` parsed
-correctly in the Orca account home. The live Chrome call has not been run yet.
+State as of 18:15:
+
+- `launchctl getenv CODEX_HOME` is empty. It was cleared by something other than
+  this investigation; the likely original cause is `launchctl setenv` run from an
+  Orca terminal, since every Orca terminal exports its account home.
+- ChatGPT.app is running against `~/.codex` (launched with
+  `open --env CODEX_HOME=$HOME/.codex`). It refreshed `~/.codex` plugins to
+  26.924.20706 and rewrote both `unified-computer-use/.mcp.json` and the legacy
+  `mcp_servers.node_repl` block with the correct CLI path
+  (`Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex`). The earlier
+  `.plugin-appserver` workaround is therefore gone.
+- Orca's Codex account is set to **System default**, which is logged in as
+  alejoacelas@gmail.com. With that selection, Orca 1.4.212 launches Codex without
+  `CODEX_HOME` unless it sees a custom `CODEX_HOME` or fails to trust its status
+  hook, in which case it silently uses `orca/codex-runtime-home/home`
+  (source: `runtime-home-service-home-routing.ts`, `codex-home.ts`).
+- The managed accounts 7b28d7d0 (work) and 8ef57008 remain as inactive entries.
+  Removing one in Orca permanently deletes its home; ask Alejandro first.
+- Orca's embedded browser is out of scope: Alejandro does not use it.
+
+## Remaining validation
+
+1. In a new Orca terminal, confirm `CODEX_HOME` and `ORCA_CODEX_HOME` are unset,
+   run `codex --dangerously-bypass-approvals-and-sandbox --profile cli`, and confirm
+   the new session file lands in `~/.codex/sessions/`.
+2. In a fresh Codex session launched that way, confirm `mcp__cua_repl.js` is a
+   top-level tool, read Chrome state (profile names and tab counts only), and open
+   then close one `https://example.com` tab. Alejandro approved exactly this test.
+   Record tool discovery, launch, and real control as separate results.
+3. Restart persistence: quit ChatGPT.app, reopen it normally from Finder or the
+   Dock (no `--env`), confirm its app-server has no Orca `CODEX_HOME`, and repeat
+   step 2's tool discovery.
+4. Write the verified outcome here and in README.md, then commit and push.
 
 ## Prior changes still in place
 
