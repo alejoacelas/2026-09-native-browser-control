@@ -1,6 +1,8 @@
 # Investigation
 
-Updated 2026-09-26 by Claude Opus 5.5. The earlier handoff notes are folded in below.
+Updated 2026-09-26 by Claude Opus 5.5. **Status: fixed and verified.** Orca-hosted
+Codex sessions control Chrome natively through `cua_repl`; see
+[Validation](#validation-2026-09-26-passed).
 
 ## Intended result
 
@@ -72,7 +74,7 @@ the `cli` profile (`dotfiles/codex/cli.config.toml`, linked at
 `~/.codex/cli.config.toml`), which selects CLI-only skills, plugins, and connectors.
 This removes the need for any `cua_repl` copy or Orca account-home workaround.
 
-State as of 18:15:
+State as of 18:15 (still true at 19:12):
 
 - `launchctl getenv CODEX_HOME` is empty. It was cleared by something other than
   this investigation; the likely original cause is `launchctl setenv` run from an
@@ -92,26 +94,39 @@ State as of 18:15:
   Removing one in Orca permanently deletes its home; ask Alejandro first.
 - Orca's embedded browser is out of scope: Alejandro does not use it.
 
-## Remaining validation
+## Validation (2026-09-26, passed)
 
-1. In a new Orca terminal, confirm `CODEX_HOME` and `ORCA_CODEX_HOME` are unset,
-   run `codex --dangerously-bypass-approvals-and-sandbox --profile cli`, and confirm
-   the new session file lands in `~/.codex/sessions/`.
-2. In a fresh Codex session launched that way, confirm `mcp__cua_repl.js` is a
-   top-level tool, read Chrome state (profile names and tab counts only), and open
-   then close one `https://example.com` tab. Alejandro approved exactly this test.
-   Record tool discovery, launch, and real control as separate results.
-3. Restart persistence: quit ChatGPT.app, reopen it normally from Finder or the
-   Dock (no `--env`), confirm its app-server has no Orca `CODEX_HOME`, and repeat
-   step 2's tool discovery.
-4. Write the verified outcome here and in README.md, then commit and push.
+All tests ran from an Orca terminal where `CODEX_HOME`, `ORCA_CODEX_HOME`, and
+`launchctl getenv CODEX_HOME` were all empty. The CLI was `~/.local/bin/codex`
+0.154.0, run as `codex exec --dangerously-bypass-approvals-and-sandbox --profile cli`
+(the non-interactive form of Orca's launch command, with the same profile and config).
+
+1. **Session home.** The session file landed in `~/.codex/sessions/2026/09/26/`.
+2. **Native Chrome control**, reported as three separate results:
+   - Tool discovery: `mcp__cua_repl.js` and `mcp__cua_repl.js_reset` are direct
+     top-level tools, and the session receives the Chrome/browser usage instructions.
+   - Launch: `cua.getState()` connected to Chrome and returned one profile
+     (Alejo, 10 tabs).
+   - Real control: `cua.createBrowserTab("chrome", "https://example.com")` opened a
+     tab titled "Example Domain"; `close()` closed it, and `listTabs` confirmed it
+     was gone. No other tab was touched.
+3. **Restart persistence.** ChatGPT.app was quit and reopened with `open -a ChatGPT`
+   (no `--env`). Its app-server has no `CODEX_HOME` in its environment and holds
+   only `~/.codex` state files open. A fresh CLI session again listed
+   `mcp__cua_repl.js` as a direct tool with browser instructions.
+
+`cua.getState()` returns the titles and URLs of every open tab, so a "profile
+names and tab counts only" test still puts existing tab titles into the Codex
+session transcript. The tool offers no counts-only call.
+
+Not tested: switching ChatGPT accounts. The chosen setup uses one login, so the
+only account change left is signing out and back in on `~/.codex`.
 
 ## Prior changes still in place
 
-- `mcp_servers.node_repl.env.CODEX_CLI_PATH` in the main and account configs points to
-  `~/.codex/plugins/.plugin-appserver/codex` (0.155.0-alpha.9.2). Backups:
-  `config.toml.before-chrome-fix-20260926-172919`. This legacy server is not the
-  native browser path; ChatGPT.app rewrites the block on its next materialization.
+- The `.plugin-appserver` CLI override in `mcp_servers.node_repl` is gone: ChatGPT.app
+  rewrote the block for 26.924.20706. Backup of the earlier edit:
+  `config.toml.before-chrome-fix-20260926-172919`.
 - Three global instruction sentences preferring Browser Use Cloud were removed from
   dotfiles `agents/AGENTS.md` (`f8c9d04`). Do not restore them.
 
