@@ -1,19 +1,14 @@
-# Restore native Codex browser control
+# Native browser control — merged
 
-Orca-hosted Codex sessions had lost the native Chrome tool (`cua_repl`). **Fixed and
-verified on 2026-09-26:** a fresh Codex session launched from an Orca terminal
-discovers `mcp__cua_repl.js`, connects to Chrome, and opened and closed a test tab.
-The setup survived quitting and reopening ChatGPT.app.
+The current home is [Agent browser and computer control](https://github.com/alejoacelas/2026-09-agent-browser-rules/blob/main/README.md).
+Its [report](https://github.com/alejoacelas/2026-09-agent-browser-rules/blob/main/REPORT.md) compares Codex, Claude Code,
+Cowork and related browser/desktop surfaces.
 
-Cause: Orca's managed account homes cannot load Codex's reserved `openai-bundled`
-plugin marketplace ([stablyai/orca#20741](https://github.com/stablyai/orca/issues/20741)).
+This repository was imported, with unsquashed Git history, into
+[`native-control/`](https://github.com/alejoacelas/2026-09-agent-browser-rules/tree/main/native-control) on
+2026-09-28. This checkout and its public remote remain a historical backup.
+Continue new work in the combined repository.
 
-Setup that works: one ChatGPT login. ChatGPT.app and Orca's Codex CLI both use
-`~/.codex`; Orca's Codex account is set to **System default**, and CLI-only choices
-live in the `cli` profile (`~/.codex/cli.config.toml`, linked from dotfiles). Keep
-`CODEX_HOME` unset, including in `launchctl`; a global value redirects ChatGPT.app
-into an Orca account home.
-
-[INVESTIGATION.md](INVESTIGATION.md) has the evidence, validation results, and
-inspection locations. Uninstall/reinstall actions require Alejandro's explicit
-confirmation first.
+[INVESTIGATION.md](INVESTIGATION.md) preserves the September 26 repair and passing
+Chrome-control test. Orca uses the standard `~/.codex` home with the System default
+account; avoid a global `CODEX_HOME` pointing at an Orca managed account home.
