@@ -1,7 +1,7 @@
 # Native browser control — merged
 
 The current home is [Agent browser and computer control](https://github.com/alejoacelas/2026-09-agent-browser-rules/blob/main/README.md).
-Its [report](https://github.com/alejoacelas/2026-09-agent-browser-rules/blob/main/REPORT.md) compares Codex, Claude Code,
+Its [report](https://github.com/alejoacelas/2026-09-agent-browser-rules/blob/main/BROWSER-CAPABILITIES.md) compares Codex, Claude Code,
 Cowork and related browser/desktop surfaces.
 
 This repository was imported, with unsquashed Git history, into
